@@ -46,6 +46,9 @@ export const UI = {
     pausedLede: 'This tool is switched off for now. It may be back soon.',
     pausedTry: 'Try one of these instead',
     popularSizes: 'Popular sizes',
+    exploreTitle: 'Explore all tools',
+    exploreHint: 'Drag to explore',
+    gridView: 'Grid view',
     anySize: 'Any size',
   },
   th: {
@@ -87,6 +90,9 @@ export const UI = {
     pausedLede: 'ตอนนี้ปิดเครื่องมือนี้ไว้ชั่วคราว อาจกลับมาเร็ว ๆ นี้',
     pausedTry: 'ลองใช้เครื่องมือเหล่านี้แทน',
     popularSizes: 'ขนาดยอดนิยม',
+    exploreTitle: 'สำรวจเครื่องมือทั้งหมด',
+    exploreHint: 'ลากเพื่อสำรวจ',
+    gridView: 'มุมมองตาราง',
     anySize: 'ขนาดอื่น ๆ',
   },
 };

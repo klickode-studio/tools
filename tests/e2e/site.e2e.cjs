@@ -232,6 +232,17 @@ let failures = 0;
   await page.click('[data-tab="links"]'); await page.fill('[data-pay="id"]', '0812345678');
   check('link in bio promptpay', /kb-pay/.test(await page.inputValue('#html-out')));
 
+  // ---- explore: floating canvas ----
+  await page.goto(B + '/explore/'); await page.waitForTimeout(400);
+  const exCount = await page.locator('.ex-item').count();
+  const first = () => page.evaluate(() => document.querySelector('.ex-item').style.transform);
+  const t0 = await first();
+  await page.mouse.move(700, 450); await page.mouse.down(); await page.mouse.move(400, 300, { steps: 8 }); await page.mouse.up(); await page.waitForTimeout(200);
+  check('explore floats every tool', exCount === toolCount, exCount);
+  check('explore drags', (await first()) !== t0);
+  await page.fill('#ex-q', 'json formatter'); await page.waitForTimeout(100);
+  check('explore search', (await page.locator('.ex-item.ex-match').count()) === 1);
+
   // ---- tool switchboard (its GitHub calls are covered by hand; the strict test CSP blocks them) ----
   await page.goto(B + '/admin/');
   check('admin lists every tool', (await page.locator('[role="switch"]').count()) === (await page.request.get(B + '/assets/tools-index.json').then((r) => r.json())).length);
@@ -241,13 +252,14 @@ let failures = 0;
   // ---- accessibility: axe-core on every page in the sitemap, light and dark ----
   const axe = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
   const sitemap = await (await page.request.get(B + '/sitemap.xml')).text();
-  const pages = [...sitemap.matchAll(/<loc>https?:\/\/[^/]+([^<]*)<\/loc>/g)].map((m) => m[1]);
+  const pages = [...sitemap.matchAll(/<loc>https?:\/\/[^/]+([^<]*)<\/loc>/g)].map((m) => m[1]).concat(['/explore/', '/th/explore/', '/admin/']);
   await page.setViewportSize({ width: 1280, height: 900 });
   const a11y = new Map();
   for (const scheme of ['light', 'dark']) {
     await page.emulateMedia({ colorScheme: scheme });
     for (const p of pages) {
       await page.goto(B + p);
+      if (p.includes('/explore/')) await page.waitForTimeout(2000); // let the cards finish fading in
       await page.addScriptTag({ content: axe });
       const found = await page.evaluate(async () => (await window.axe.run(document, { resultTypes: ['violations'] })).violations.map((v) => `${v.id} (${v.impact}) ${v.nodes[0]?.target.join(' ')}`));
       for (const v of found) a11y.set(v, `${scheme} ${p}`);

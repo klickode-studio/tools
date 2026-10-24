@@ -350,6 +350,40 @@ ${categories
   );
 }
 
+// --- explore: every tool floating on an endless canvas you drag around (an experiment, so it's
+// kept out of search and the sitemap until it's chosen over the grid) -------------------------
+for (const lang of LANG_IDS) {
+  const u = UI[lang];
+  const path = localPath(lang, '/explore/');
+  await page(
+    path,
+    layout({
+      siteUrl,
+      path,
+      lang,
+      alternates: { en: '/explore/', th: localPath('th', '/explore/') },
+      robots: 'noindex',
+      categoryNames: categoryNames(lang),
+      strings: lang === 'en' ? null : RUNTIME[lang],
+      title: `${u.exploreTitle} | ${SITE_NAME}`,
+      description: u.homeDescription,
+      scripts: ['/assets/js/explore.js'],
+      styles: ['/assets/css/explore.css'],
+      bodyAttrs: ' data-page="explore"',
+      body: `<h1 class="ex-title">${u.exploreTitle}</h1>
+<div class="explore" id="explore" tabindex="-1">
+  <div class="ex-world" id="world">${toolGrid(cards(tools).map((t) => toolIn(t, lang)), catOfIn(lang))}</div>
+  <div class="ex-bar">
+    <div class="ex-search"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="search" id="ex-q" placeholder="${esc(u.searchPlaceholder)}" aria-label="${esc(u.searchLabel)}" autocomplete="off"></div>
+    <span class="ex-none" id="ex-none" role="status" hidden>${u.noResults}</span>
+    <a class="ex-grid" href="${localPath(lang, '/')}">${u.gridView}</a>
+  </div>
+  <p class="ex-hint" id="ex-hint" aria-hidden="true">${u.exploreHint}</p>
+</div>`,
+    }),
+  );
+}
+
 // --- switched-off tools and emptied categories: a "taking a break" page, kept out of search ----
 for (const lang of LANG_IDS) {
   const u = UI[lang];
