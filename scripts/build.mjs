@@ -372,7 +372,7 @@ for (const lang of LANG_IDS) {
       styles: ['/assets/css/explore.css'],
       bodyAttrs: ' data-page="explore"',
       body: `<div class="explore" id="explore" tabindex="-1">
-  <div class="ex-world" id="world"><div class="ex-hero" id="ex-hero"><img class="hx-mark" src="/assets/brand/mark.svg" alt="" width="120" height="120"><div class="hx-text"><p class="eyebrow">${u.eyebrow(cards(tools).length)}</p><h1 class="hx-title">${u.worldTitle.map((w, i) => `<span${i === u.worldTitle.length - 1 ? ' class="hx-red"' : ''}>${w}</span>`).join(' ')}</h1><p class="hx-lede">${u.worldLede}</p><p class="hx-chips">${u.worldChips(cards(tools).length).map((c) => `<span>${c}</span>`).join('')}</p></div></div>${toolGrid(cards(tools).map((t) => toolIn(t, lang)), catOfIn(lang))}</div>
+  <div class="ex-world" id="world"><div class="ex-hero" id="ex-hero"><img class="hx-mark" src="/assets/brand/mark.svg" alt="" width="120" height="120"><div class="hx-text"><p class="eyebrow">${u.eyebrow(cards(tools).length)}</p><h1 class="hx-title">${u.worldTitle.map((w, i) => `<span${i === u.worldTitle.length - 1 ? ' class="hx-red"' : ''}>${w}</span>`).join(' ')}</h1><p class="hx-lede">${u.worldLede}</p><p class="hx-chips">${u.worldChips(cards(tools).length).map((c) => `<span>${c}</span>`).join('')}</p></div><div class="hx-cat" id="hx-cat" hidden><span class="hx-cat-icon" id="hx-cat-icon"></span><p class="hx-cat-count" id="hx-cat-count"></p><h2 class="hx-cat-name" id="hx-cat-name"></h2><p class="hx-cat-desc" id="hx-cat-desc"></p><a class="hx-cat-link" id="hx-cat-link" href="${localPath(lang, '/')}">${u.catPageLink}<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div></div>${toolGrid(cards(tools).map((t) => toolIn(t, lang)), catOfIn(lang))}</div>
   <a class="ex-logo" id="ex-logo" href="${path}" title="${esc(u.backToMiddle)}"><img src="/assets/brand/mark.svg" alt="" width="30" height="30"><span class="brand-text"><span class="brand-name">Klickode</span><span class="brand-tag">Tools</span></span></a>
   <div class="ex-corner">
     <a class="ex-pill" href="${localPath(other, '/explore/')}" hreflang="${other}" lang="${other}" title="${esc(u.switchTo)}">${LANGS[other].short}</a>
@@ -401,7 +401,7 @@ for (const lang of LANG_IDS) {
             .filter((c) => cards(byCategory(c.id)).length)
             .map((base) => {
               const c = catIn(base, lang);
-              return `<button type="button" role="menuitemradio" aria-checked="false" data-cat="${c.id}">${categoryIcon(c, 15)}<span>${esc(c.name)}</span><b>${cards(byCategory(c.id)).length}</b></button>`;
+              return `<button type="button" role="menuitemradio" aria-checked="false" data-cat="${c.id}" data-desc="${esc(c.description)}" data-href="${localPath(lang, `/${c.slug}/`)}" data-count="${esc(u.catCount(cards(byCategory(c.id)).length))}">${categoryIcon(c, 15)}<span>${esc(c.name)}</span><b>${cards(byCategory(c.id)).length}</b></button>`;
             })
             .join('')}
         </div>

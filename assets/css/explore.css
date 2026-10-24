@@ -24,12 +24,32 @@ body[data-page='explore'] main > .wrap { max-width: none; padding: 0; }
 .hx-chips b { color: var(--red); }
 :lang(th) .hx-title { font-size: 34px; line-height: 1.25; letter-spacing: 0; }
 :lang(th) .hx-chips span { font-family: var(--sans); font-size: 12px; letter-spacing: 0; }
-/* In a category's orbit the card shrinks to the mascot, the category and the headline. */
-.ex-orbit .ex-hero { padding: 22px 26px; }
-.ex-orbit .hx-mark { width: 64px; height: 64px; margin-bottom: 10px; }
-.ex-orbit .ex-hero .eyebrow { display: block; }
-.ex-orbit .hx-title { font-size: 30px; }
-.ex-orbit .hx-lede, .ex-orbit .hx-chips { display: none; }
+/* In a category the welcome card turns into the category's own card, in the category's colour. */
+.hx-cat { display: none; }
+.ex-cat-view .ex-hero > :is(.hx-mark, .hx-text) { display: none; }
+.ex-cat-view .hx-cat { display: grid; justify-items: center; }
+.ex-cat-view .ex-hero { padding: 28px 28px 26px; border-color: color-mix(in srgb, var(--accent) 28%, var(--border)); box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 34px 70px -34px color-mix(in srgb, var(--accent) 55%, transparent); }
+.hx-cat-icon { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 20px; color: #fff; background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 78%, #fff), var(--accent)); box-shadow: 0 16px 30px -14px var(--accent), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+.hx-cat-icon svg { width: 30px; height: 30px; }
+.ex-hero-item .hx-cat-icon { animation: ex-wobble 6s ease-in-out 1.2s infinite; }
+.hx-cat-count { display: inline-flex; align-items: center; gap: 7px; margin: 16px 0 6px; color: var(--muted); font: 600 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.hx-cat-count::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); }
+.hx-cat-name { margin: 0; font-size: 30px; line-height: 1.1; letter-spacing: -0.03em; font-weight: 800; }
+.hx-cat-desc { margin: 10px auto 0; max-width: 34ch; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.hx-cat-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; padding: 8px 15px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); border-radius: 999px; background: color-mix(in srgb, var(--accent) 7%, var(--surface)); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none; transition: background 0.2s, border-color 0.2s; }
+.hx-cat-link svg { color: var(--accent); transition: transform 0.2s; }
+.hx-cat-link:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.hx-cat-link:hover svg { transform: translateX(3px); }
+:lang(th) .hx-cat-name { font-size: 26px; line-height: 1.3; letter-spacing: 0; }
+:lang(th) .hx-cat-count { font-family: var(--sans); font-size: 12px; letter-spacing: 0; text-transform: none; }
+/* The orbit's ring: two faint ellipses, slowly turning dashes, and a glow in the category's colour. */
+.ex-ring { position: absolute; left: 0; top: 0; pointer-events: none; will-change: transform; background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 13%, transparent), transparent 75%); }
+.ex-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ex-ring ellipse { fill: none; stroke: color-mix(in srgb, var(--accent) 40%, transparent); stroke-width: 1.5; stroke-dasharray: 2 9; stroke-linecap: round; animation: ex-dash 40s linear infinite; }
+.ex-ring .ex-ring-b { stroke: color-mix(in srgb, var(--accent) 22%, transparent); stroke-dasharray: none; animation: none; }
+@keyframes ex-dash { to { stroke-dashoffset: -440; } }
+/* Category cards sit straight, so the orbit and the stack read tidy. */
+.ex-cat-view .ex-item > * { --rot: 0deg; }
 .ex-dock { position: fixed; left: 50%; bottom: 22px; z-index: 6; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: calc(100vw - 24px); }
 .ex-bar { display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid var(--border-strong); border-radius: 999px; background: color-mix(in srgb, var(--surface) 84%, transparent); backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%); box-shadow: 0 18px 44px -18px rgba(24, 24, 27, 0.4); }
 .ex-search { display: flex; align-items: center; gap: 8px; padding: 0 6px 0 12px; color: var(--muted); }
@@ -121,6 +141,8 @@ body.ex-live main > .wrap { height: 100%; }
   -webkit-user-select: none;
   background: radial-gradient(55% 45% at 50% 45%, var(--glow), transparent 70%), var(--bg);
 }
+/* A soft fade at the edges, so the world melts away under the corner controls and the dock. */
+.ex-live .explore::after { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: linear-gradient(var(--bg), color-mix(in srgb, var(--bg) 70%, transparent) 50px, transparent 120px), linear-gradient(to top, var(--bg), color-mix(in srgb, var(--bg) 70%, transparent) 60px, transparent 150px), radial-gradient(120% 110% at 50% 50%, transparent 62%, color-mix(in srgb, var(--bg) 75%, transparent) 100%); }
 /* The dot grid: a layer a little bigger than the screen, nudged by explore.js as you pan. */
 .ex-dots { position: absolute; inset: -22px -22px auto auto; width: calc(100% + 44px); height: calc(100% + 44px); background: radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0) 0 0 / 22px 22px; pointer-events: none; will-change: transform; }
 .ex-live .explore.dragging { cursor: grabbing; }
@@ -131,7 +153,7 @@ body.ex-live main > .wrap { height: 100%; }
 /* Each floating card: placed by explore.js, tilted a little (--rot), straightening on hover. */
 .ex-item { position: absolute; left: 0; top: 0; width: 290px; transform-origin: 0 0; will-change: transform; }
 .ex-item.ex-hero-item { width: 500px; }
-.ex-orbit .ex-item.ex-hero-item { width: 380px; }
+.ex-orbit .ex-item.ex-hero-item { width: 400px; }
 .ex-item > .tool-card, .ex-item > .ex-hero { width: 100%; transform: rotate(var(--rot, 0deg)); transition: opacity 0.6s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s, box-shadow 0.3s; -webkit-user-drag: none; }
 .ex-item > .tool-card:hover, .ex-item > .tool-card:focus-visible { transform: rotate(0deg) translateY(-4px) scale(1.03); }
 .ex-item img, .ex-item svg { -webkit-user-drag: none; pointer-events: none; }
@@ -208,5 +230,5 @@ body:not(.ex-seen) .ex-hero-item.ex-in .hx-chips span:nth-child(4) { animation-d
   .ex-cat-btn { padding: 0 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ex-item.ex-in > *, .ex-hero-item .hx-mark, .ex-hero-item.ex-in :is(.hx-title span, .hx-lede, .hx-chips span), .ex-cat-menu, .ex-suggest, .ex-more-menu, .ex-dice.ex-pick, .ex-item.ex-pick > .tool-card { animation: none; }
+  .ex-item.ex-in > *, .ex-hero-item .hx-mark, .ex-hero-item .hx-cat-icon, .ex-ring ellipse, .ex-hero-item.ex-in :is(.hx-title span, .hx-lede, .hx-chips span), .ex-cat-menu, .ex-suggest, .ex-more-menu, .ex-dice.ex-pick, .ex-item.ex-pick > .tool-card { animation: none; }
 }

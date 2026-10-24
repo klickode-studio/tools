@@ -61,18 +61,26 @@ const motes = Array.from({ length: icons.length ? 18 : 0 }, (_, i) => {
   grid.prepend(el);
   return { el, depth: 0.35 + rand() * 0.15, phase: rand() * Math.PI * 2, size: 0.8 + rand() * 0.7 };
 });
+// The orbit's ring: two faint ellipses and a soft glow in the category's colour, behind the cards.
+const ringEl = document.createElement('div');
+ringEl.className = 'ex-ring';
+ringEl.setAttribute('aria-hidden', 'true');
+ringEl.innerHTML = '<svg><ellipse class="ex-ring-a"/><ellipse class="ex-ring-b"/></svg>';
+grid.prepend(ringEl);
 // The dot grid moves too, slower still.
 const dots = document.createElement('div');
 dots.className = 'ex-dots';
 dots.setAttribute('aria-hidden', 'true');
 box.prepend(dots);
 
-let mode = 'field'; // 'field': every tool scattered; 'orbit': one category around the welcome card
+let mode = 'field'; // 'field': every tool scattered; 'orbit': one category around the welcome card;
+// 'stack': one category on a phone, in two tidy columns under the welcome card, scrolling up and down
 let scale = 1; // how big cards are drawn: smaller on phones, and zoomed out to fit an orbit
 let tileW = 0;
 let tileH = 0;
 let margin = 0; // a card's width on screen: how far off screen a card goes before it wraps round
 let ring = null; // { cx, cy, rx, ry, n } for the orbit, in screen pixels
+let stackH = 0; // how tall the stacked columns are, for how far they scroll
 let spin = 0;
 let hovering = false;
 
@@ -155,11 +163,49 @@ function layoutOrbit(base) {
   tileH = (ry * 2 + h) * scale + box.clientHeight * 2;
   margin = w * scale;
   ring = { cx: tileW / 2, cy: tileH / 2, rx: rx * scale, ry: ry * scale, n, w: w * scale, h: h * scale };
+  const rw = ring.rx * 2 + ring.w * 1.2;
+  const rh = ring.ry * 2 + ring.h * 1.2;
+  ringEl.style.width = `${rw}px`;
+  ringEl.style.height = `${rh}px`;
+  const svg = ringEl.firstChild;
+  svg.setAttribute('viewBox', `0 0 ${rw} ${rh}`);
+  for (const [e, k] of [[svg.children[0], 1], [svg.children[1], 0.56]]) {
+    for (const [a, v] of [['cx', rw / 2], ['cy', rh / 2], ['rx', ring.rx * k], ['ry', ring.ry * k]]) e.setAttribute(a, v.toFixed(1));
+  }
   hero.x = ring.cx - (hw * scale) / 2;
   hero.y = ring.cy - (hh * scale) / 2;
   tools.forEach((it, i) => (it.slot = i));
   orbit();
 }
+
+// Stack (phones): the welcome card across the top, then the tools one under another at full
+// size, so their text stays readable. Only scrolls up and down.
+function layoutStack() {
+  const tools = shown.filter((i) => i.card);
+  const gap = 16;
+  const top = 72;
+  const w = Math.min(box.clientWidth - 32, 440);
+  scale = 1;
+  let y = top;
+  for (const it of [hero, ...tools]) {
+    it.el.style.width = `${w}px`;
+    it.x = (box.clientWidth - w) / 2;
+    it.y = y;
+    y += it.el.offsetHeight + gap;
+  }
+  stackH = y + 100; // room for the dock
+  tileW = box.clientWidth * 3;
+  tileH = stackH + box.clientHeight * 2;
+  margin = box.clientWidth;
+}
+const clampStack = () => {
+  panX = 0;
+  const min = Math.min(0, box.clientHeight - stackH);
+  if (panY > 0 || panY < min) {
+    panY = Math.max(min, Math.min(0, panY));
+    velY = 0;
+  }
+};
 
 // Where each card sits on the orbit right now.
 function orbit() {
@@ -175,9 +221,15 @@ function layout() {
   seed = 11;
   const base = small.matches ? 0.55 : 1;
   const tools = shown.length - 1;
-  mode = activeCat && tools >= 2 && tools <= 12 ? 'orbit' : 'field';
+  mode = activeCat && tools >= 2 && tools <= 12 ? (small.matches ? 'stack' : 'orbit') : 'field';
   box.classList.toggle('ex-orbit', mode === 'orbit');
+  box.classList.toggle('ex-stack', mode === 'stack');
+  box.classList.toggle('ex-cat-view', mode !== 'field');
+  ringEl.hidden = mode !== 'orbit';
+  if (mode !== 'field') hideHint();
+  if (mode !== 'stack') for (const it of items) it.el.style.width = '';
   if (mode === 'orbit') layoutOrbit(base);
+  else if (mode === 'stack') layoutStack();
   else layoutField(base);
   for (const m of motes) {
     m.x = rand() * tileW;
@@ -206,7 +258,7 @@ let last = 0;
 const wrap = (v, size) => ((v % size) + size) % size;
 
 function place(it, s = 1) {
-  const bob = still ? 0 : Math.sin(clock * 0.0011 + it.phase) * 5 * scale;
+  const bob = still || mode === 'stack' ? 0 : Math.sin(clock * 0.0011 + it.phase) * 5 * scale;
   const x = wrap(it.x + panX * it.depth + parX * it.depth * 26 + margin, tileW) - margin;
   const y = wrap(it.y + panY * it.depth + parY * it.depth * 18 + bob + margin, tileH) - margin;
   it.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${(s * scale).toFixed(3)})`;
@@ -243,8 +295,16 @@ function frame(now) {
     spin += (dt * 2 * Math.PI) / 120000;
     orbit();
   }
+  if (mode === 'stack') clampStack();
   for (const m of motes) {
     place(m, m.size);
+  }
+  if (mode === 'orbit') {
+    // The ring follows the copy of the orbit nearest the middle of the screen.
+    const near = (c, pan, par, size, view) => wrap(c + pan + par - view / 2 + size / 2, size) - size / 2 + view / 2;
+    const x = near(ring.cx, panX, parX * 26, tileW, box.clientWidth) - ringEl.offsetWidth / 2;
+    const y = near(ring.cy, panY, parY * 18, tileH, box.clientHeight) - ringEl.offsetHeight / 2;
+    ringEl.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
   }
   dots.style.transform = `translate3d(${(wrap(panX * 0.3, 22) - 22).toFixed(1)}px, ${(wrap(panY * 0.3, 22) - 22).toFixed(1)}px, 0)`;
   for (const it of shown) place(it);
@@ -347,6 +407,7 @@ function centred(it) {
 }
 function centre(it) {
   target = centred(it);
+  if (mode === 'stack') target = { x: 0, y: Math.max(Math.min(0, box.clientHeight - stackH), Math.min(0, target.y)) };
   idleSince = performance.now();
 }
 
@@ -511,7 +572,8 @@ setTimeout(hideHint, 4000);
 function begin() {
   layout();
   for (const it of shown) place(it);
-  ({ x: panX, y: panY } = centred(hero)); // open on the welcome card
+  if (mode === 'stack') panX = panY = 0; // open at the top
+  else ({ x: panX, y: panY } = centred(hero)); // open on the welcome card
   for (const it of shown) place(it);
 }
 // Cards float in from nearest the middle outwards.
@@ -556,8 +618,21 @@ async function showCategory(id, animate = true) {
   spin = 0;
   shown = items.filter((it) => !it.card || !id || it.cat === id);
   for (const it of items) it.el.hidden = !shown.includes(it);
-  // The welcome card names the category and how many tools are in it.
+  // The welcome card turns into the category's own card: its icon, name, what's in it, and a link
+  // to its guide page.
   eyebrow.textContent = id ? `${label} · ${shown.length - 1}` : allTools;
+  const opt = catOptions.find((o) => o.dataset.cat === id);
+  hero.el.dataset.category = id;
+  ringEl.dataset.category = id;
+  for (const m of motes) m.el.hidden = Boolean(id) && m.el.dataset.category !== id; // only this category's icons drift behind
+  $('#hx-cat').hidden = !id;
+  if (id) {
+    $('#hx-cat-icon').replaceChildren(opt.querySelector('svg').cloneNode(true));
+    $('#hx-cat-count').textContent = opt.dataset.count;
+    $('#hx-cat-name').textContent = label;
+    $('#hx-cat-desc').textContent = opt.dataset.desc;
+    $('#hx-cat-link').href = opt.dataset.href;
+  }
   if (input.value) {
     input.value = '';
     input.dispatchEvent(new Event('input'));
