@@ -370,9 +370,8 @@ for (const lang of LANG_IDS) {
       scripts: ['/assets/js/explore.js'],
       styles: ['/assets/css/explore.css'],
       bodyAttrs: ' data-page="explore"',
-      body: `<h1 class="ex-title">${u.exploreTitle}</h1>
-<div class="explore" id="explore" tabindex="-1">
-  <div class="ex-world" id="world">${toolGrid(cards(tools).map((t) => toolIn(t, lang)), catOfIn(lang))}</div>
+      body: `<div class="explore" id="explore" tabindex="-1">
+  <div class="ex-world" id="world"><div class="ex-hero" id="ex-hero"><img src="/assets/brand/mark.svg" alt="" width="76" height="76"><p class="eyebrow">${u.eyebrow(cards(tools).length)}</p><h1>${u.exploreTitle}</h1><p>${u.exploreLede}</p></div>${toolGrid(cards(tools).map((t) => toolIn(t, lang)), catOfIn(lang))}</div>
   <div class="ex-bar">
     <div class="ex-search"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="search" id="ex-q" placeholder="${esc(u.searchPlaceholder)}" aria-label="${esc(u.searchLabel)}" autocomplete="off"></div>
     <span class="ex-none" id="ex-none" role="status" hidden>${u.noResults}</span>

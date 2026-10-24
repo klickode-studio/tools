@@ -234,7 +234,7 @@ let failures = 0;
 
   // ---- explore: floating canvas ----
   await page.goto(B + '/explore/'); await page.waitForTimeout(400);
-  const exCount = await page.locator('.ex-item').count();
+  const exCount = await page.locator('.ex-item .tool-card').count();
   const first = () => page.evaluate(() => document.querySelector('.ex-item').style.transform);
   const t0 = await first();
   await page.mouse.move(700, 450); await page.mouse.down(); await page.mouse.move(400, 300, { steps: 8 }); await page.mouse.up(); await page.waitForTimeout(200);

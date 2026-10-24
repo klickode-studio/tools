@@ -1,54 +1,25 @@
-/* Explore (/explore/): the tools floating on an endless dark canvas. Without JavaScript it's a
-   plain grid that scrolls; assets/js/explore.js adds .ex-live and takes over the layout. */
-body[data-page='explore'] {
-  --bg: #0b0b0d;
-  --outer: #050506;
-  --surface: #17171b;
-  --mist: #202026;
-  --bar: #1b1b20;
-  --text: #f4f4f5;
-  --muted: #a8a8b3;
-  --faint: #9898a3;
-  --border: #2a2a31;
-  --border-strong: #3a3a43;
-  --link: #ff6b6b;
-  --ok: #4ade80;
-  --ok-bg: #102a1b;
-  --err: #ff7b7b;
-  --err-bg: #34161a;
-  --mark: #6b5400;
-  --mark-alt: #6b1f1f;
-  --warn: #fbbf24;
-  --add-bg: #12301f;
-  --del-bg: #3a1a1d;
-  --serp-title: #99c3ff;
-  --tk-key: #ff8a80;
-  --tk-str: #6ee7a0;
-  --tk-num: #93b4ff;
-  --glow: rgba(224, 49, 49, 0.12);
-  --dot: rgba(255, 255, 255, 0.05);
-  --shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.9);
-  color-scheme: dark;
-}
-body[data-page='explore'] .site-footer,
-body[data-page='explore'] #theme-toggle { display: none; }
+/* Explore (/explore/): the tools floating on an endless canvas, in the site's own light or dark
+   theme. Without JavaScript it's a plain grid that scrolls; assets/js/explore.js adds .ex-live
+   and takes over the layout. */
+body[data-page='explore'] .site-footer { display: none; }
 body[data-page='explore'] main { padding: 0; }
-body[data-page='explore'] .brand-tag,
-body[data-page='explore'] .tc-preview { --red: #ff6b6b; }
-body[data-page='explore'] .brand-tag { color: var(--red); } /* the darker canvas needs a lighter red for small text */
 body[data-page='explore'] main > .wrap { max-width: none; padding: 0; }
-.ex-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* Without JavaScript: a normal grid. */
-.explore { position: relative; padding: 24px 20px 120px; background: radial-gradient(90% 70% at 50% 0%, rgba(224, 49, 49, 0.1), transparent 60%), var(--bg); }
+/* Without JavaScript: the welcome card, then a normal grid. */
+.explore { position: relative; padding: 24px 20px 120px; }
 .explore:focus { outline: none; }
-.ex-bar { position: fixed; left: 50%; bottom: 26px; z-index: 6; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid var(--border-strong); border-radius: 999px; background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%); box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.9); }
+.ex-hero { max-width: 360px; margin: 8px auto 28px; padding: 28px 26px 26px; text-align: center; border: 1px solid var(--border); border-radius: 22px; background: var(--surface); box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 24px 50px -28px rgba(24, 24, 27, 0.35); }
+.ex-hero img { width: 76px; height: 76px; margin: 0 auto 14px; display: block; filter: drop-shadow(0 10px 18px rgba(224, 49, 49, 0.35)); }
+.ex-hero .eyebrow { margin: 0 0 8px; }
+.ex-hero h1 { margin: 0; font-size: 27px; line-height: 1.15; letter-spacing: -0.02em; }
+.ex-hero p:last-child { margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.ex-bar { position: fixed; left: 50%; bottom: 26px; z-index: 6; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid var(--border-strong); border-radius: 999px; background: color-mix(in srgb, var(--surface) 84%, transparent); backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%); box-shadow: 0 18px 44px -18px rgba(24, 24, 27, 0.4); }
 .ex-search { display: flex; align-items: center; gap: 8px; padding: 0 6px 0 12px; color: var(--muted); }
 .ex-search input { width: min(42vw, 260px); height: 36px; border: 0; background: none; color: var(--text); font: inherit; font-size: 14.5px; outline: none; box-shadow: none; padding: 0; }
 .ex-search input:focus { box-shadow: none; }
 .ex-bar:focus-within { border-color: var(--red); }
 .ex-grid { height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: var(--red); color: #fff; font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
-.ex-grid:hover { background: #f04545; }
+.ex-grid:hover { background: #c92a2a; }
 .ex-hint { display: none; }
 .ex-none { padding: 0 8px; color: var(--muted); font-size: 13px; white-space: nowrap; }
 
@@ -66,35 +37,41 @@ body.ex-live main > .wrap { height: 100%; }
   user-select: none;
   -webkit-user-select: none;
   background:
-    radial-gradient(60% 50% at 50% 45%, rgba(224, 49, 49, 0.08), transparent 70%),
-    radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0) 0 0 / 26px 26px,
+    radial-gradient(55% 45% at 50% 45%, var(--glow), transparent 70%),
+    radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0) 0 0 / 22px 22px,
     var(--bg);
 }
 .ex-live .explore.dragging { cursor: grabbing; }
 .ex-live .ex-world { position: absolute; inset: 0; }
 .ex-live .ex-world > .tool-grid { display: block; }
-.ex-item { position: absolute; left: 0; top: 0; width: 290px; will-change: transform; }
-.ex-item > .tool-card { width: 100%; transition: opacity 0.6s ease, transform 0.3s ease, border-color 0.2s, box-shadow 0.3s; -webkit-user-drag: none; }
+.ex-live .ex-hero { margin: 0; }
+
+/* Each floating card: placed by explore.js, tilted a little (--rot), straightening on hover. */
+.ex-item { position: absolute; left: 0; top: 0; width: 290px; transform-origin: 0 0; will-change: transform; }
+.ex-item.ex-hero-item { width: 340px; }
+.ex-item > .tool-card, .ex-item > .ex-hero { width: 100%; transform: rotate(var(--rot, 0deg)); transition: opacity 0.6s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s, box-shadow 0.3s; -webkit-user-drag: none; }
+.ex-item > .tool-card:hover, .ex-item > .tool-card:focus-visible { transform: rotate(0deg) translateY(-4px) scale(1.03); }
 .ex-item img, .ex-item svg { -webkit-user-drag: none; pointer-events: none; }
-.ex-item.ex-in > .tool-card { animation: ex-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: var(--delay, 0s); }
-@keyframes ex-in { from { opacity: 0; transform: translateY(24px) scale(0.92); } }
-.ex-item.ex-dim > .tool-card { opacity: 0.12; }
-.ex-item.ex-match > .tool-card { border-color: var(--red); box-shadow: 0 0 0 1px var(--red), 0 24px 50px -24px rgba(224, 49, 49, 0.6); }
+.ex-item.ex-in > * { animation: ex-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: var(--delay, 0s); }
+@keyframes ex-in { from { opacity: 0; transform: translateY(26px) scale(0.9) rotate(var(--rot, 0deg)); } }
+.ex-item.ex-dim > * { opacity: 0.14; }
+.ex-item.ex-match > .tool-card { border-color: var(--red); box-shadow: 0 0 0 1px var(--red), 0 24px 50px -24px rgba(224, 49, 49, 0.55); }
 .explore.dragging .tool-card { pointer-events: none; }
+.ex-hero-item img { animation: ex-wobble 6s ease-in-out infinite; }
+@keyframes ex-wobble { 0%, 100% { transform: rotate(-4deg) translateY(0); } 50% { transform: rotate(4deg) translateY(-6px); } }
 
 /* The far layer: small, soft, slower copies for depth. */
-.ex-ghost { position: absolute; left: 0; top: 0; width: 290px; opacity: 0.22; filter: blur(1.5px) saturate(0.7); pointer-events: none; will-change: transform; }
+.ex-ghost { position: absolute; left: 0; top: 0; width: 290px; transform-origin: 0 0; opacity: 0.3; filter: blur(1.2px) saturate(0.6); pointer-events: none; will-change: transform; }
 .ex-ghost .tool-card { box-shadow: none; }
 .ex-ghost .tool-card::after { display: none; }
 
-.ex-live .ex-hint { display: block; position: absolute; left: 50%; top: 22px; z-index: 4; transform: translateX(-50%); margin: 0; padding: 7px 14px; border: 1px solid var(--border); border-radius: 999px; background: color-mix(in srgb, var(--surface) 80%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--muted); font-size: 12.5px; letter-spacing: 0.02em; pointer-events: none; transition: opacity 0.6s; }
+.ex-live .ex-hint { display: block; position: absolute; left: 50%; top: 18px; z-index: 4; transform: translateX(-50%); margin: 0; padding: 7px 14px; border: 1px solid var(--border); border-radius: 999px; background: color-mix(in srgb, var(--surface) 85%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--muted); font-size: 12.5px; letter-spacing: 0.02em; pointer-events: none; transition: opacity 0.6s; }
 .ex-hint.gone { opacity: 0; }
 
 @media (max-width: 640px) {
-  .ex-item, .ex-ghost { width: 210px; }
-  .ex-item .tc-preview { height: 110px; }
   .ex-bar { bottom: 16px; }
+  .ex-search input { width: 44vw; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ex-item.ex-in > .tool-card { animation: none; }
+  .ex-item.ex-in > *, .ex-hero-item img { animation: none; }
 }

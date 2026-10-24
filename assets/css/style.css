@@ -212,6 +212,11 @@ h3 { font-size: 16px; margin: 20px 0 6px; font-weight: 600; }
 .brand-text { display: flex; flex-direction: column; line-height: 1; }
 .brand-name { font-weight: 800; font-size: 17px; letter-spacing: -0.03em; text-transform: uppercase; }
 .brand-tag { font-family: var(--mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; color: var(--red); margin-top: 4px; }
+/* Small red text in card illustrations needs a deeper red on light backgrounds and a lighter one
+   on dark ones to stay readable (4.5:1). */
+.tc-preview { --red: #c92a2a; }
+:root[data-theme='dark'] :is(.brand-tag, .tc-preview) { --red: #ff6b6b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) :is(.brand-tag, .tc-preview) { --red: #ff6b6b; } }
 .site-header nav { display: flex; gap: 2px; margin: 0 auto; min-width: 0; padding: 4px; border: 1px solid var(--border); border-radius: 999px; background: color-mix(in srgb, var(--mist) 55%, transparent); overflow-x: auto; scrollbar-width: none; }
 .site-header nav::-webkit-scrollbar { display: none; }
 .site-header nav a { color: var(--muted); text-decoration: none; font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 16px; border-radius: 999px; white-space: nowrap; transition: color 0.15s, background 0.15s; }
