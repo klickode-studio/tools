@@ -17,11 +17,11 @@ import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { categories, categoryById, categoryIcon } from './categories.mjs';
-import { layout, breadcrumbs, toolGrid, toolIcon, esc, localPath, studioCta, hideFromLayout, SITE_NAME, ORG_ID } from './layout.mjs';
+import { layout, breadcrumbs, toolGrid, toolIcon, esc, localPath, studioCta, hideFromLayout, SITE_NAME, ORG_ID, STUDIO_URL, THEME_ICON, POPULAR } from './layout.mjs';
 import { keepThaiWords } from './thai-words.mjs';
 import { adminBody } from './admin.mjs';
 import { LANGS, UI, RUNTIME } from './i18n.mjs';
-import { legalPages, COMPANY, BRAND_NOTICE } from './legal.mjs';
+import { legalPages, COMPANY, BRAND_NOTICE, CONTACT_URL } from './legal.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = process.env.OUT_DIR ? resolve(process.env.OUT_DIR) : join(root, 'dist');
@@ -354,6 +354,7 @@ ${categories
 // kept out of search and the sitemap until it's chosen over the grid) -------------------------
 for (const lang of LANG_IDS) {
   const u = UI[lang];
+  const other = lang === 'en' ? 'th' : 'en';
   const path = localPath(lang, '/explore/');
   await page(
     path,
@@ -372,23 +373,41 @@ for (const lang of LANG_IDS) {
       bodyAttrs: ' data-page="explore"',
       body: `<div class="explore" id="explore" tabindex="-1">
   <div class="ex-world" id="world"><div class="ex-hero" id="ex-hero"><img src="/assets/brand/mark.svg" alt="" width="76" height="76"><p class="eyebrow">${u.eyebrow(cards(tools).length)}</p><h1>${u.exploreTitle}</h1><p>${u.exploreLede}</p></div>${toolGrid(cards(tools).map((t) => toolIn(t, lang)), catOfIn(lang))}</div>
-  <div class="ex-bar">
-    <div class="ex-search"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="search" id="ex-q" placeholder="${esc(u.searchPlaceholder)}" aria-label="${esc(u.searchLabel)}" autocomplete="off"></div>
-    <div class="ex-cats">
-      <button type="button" class="ex-cat-btn" id="ex-cat-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="ex-cat-menu"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="ex-cat-label">${u.allTools}</span><svg class="ex-caret" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <div class="ex-cat-menu" id="ex-cat-menu" role="menu" aria-label="${esc(u.categoriesLabel)}" hidden>
-        <button type="button" role="menuitemradio" aria-checked="true" data-cat=""><span>${u.allTools}</span><b>${cards(tools).length}</b></button>
-        ${categories
-          .filter((c) => cards(byCategory(c.id)).length)
-          .map((base) => {
-            const c = catIn(base, lang);
-            return `<button type="button" role="menuitemradio" aria-checked="false" data-cat="${c.id}">${categoryIcon(c, 15)}<span>${esc(c.name)}</span><b>${cards(byCategory(c.id)).length}</b></button>`;
-          })
-          .join('')}
+  <a class="ex-logo" id="ex-logo" href="${path}" title="${esc(u.backToMiddle)}"><img src="/assets/brand/mark.svg" alt="" width="30" height="30"><span class="brand-text"><span class="brand-name">Klickode</span><span class="brand-tag">Tools</span></span></a>
+  <div class="ex-corner">
+    <a class="ex-pill" href="${localPath(other, '/explore/')}" hreflang="${other}" lang="${other}" title="${esc(u.switchTo)}">${LANGS[other].short}</a>
+    <button type="button" class="ex-pill ex-icon" id="ex-theme" aria-label="${esc(u.themeToggle)}" title="${esc(u.themeToggle)}">${THEME_ICON}</button>
+    <div class="ex-more">
+      <button type="button" class="ex-pill ex-icon" id="ex-more-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="ex-more-menu" aria-label="${esc(u.moreLabel)}" title="${esc(u.moreLabel)}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg></button>
+      <div class="ex-more-menu" id="ex-more-menu" role="menu" aria-label="${esc(u.moreLabel)}" hidden>
+        <a role="menuitem" href="${localPath(lang, '/')}">${u.gridView}</a>
+        ${categories.filter((c) => cards(byCategory(c.id)).length).map((base) => { const c = catIn(base, lang); return `<a role="menuitem" class="ex-sub" href="${localPath(lang, `/${c.slug}/`)}">${categoryIcon(c, 14)}${esc(c.name)}</a>`; }).join('')}
+        <hr>
+        <a role="menuitem" href="${STUDIO_URL}">Klickode Studio <span aria-hidden="true">↗</span></a>
+        <a role="menuitem" href="${CONTACT_URL}">${u.contact}</a>
+        <p class="ex-legal">${[['/terms/', u.legal.terms], ['/privacy/', u.legal.privacy], ['/copyright/', u.legal.copyright]].map(([href, label]) => `<a href="${href}">${label}</a>`).join(' · ')}<br>© ${new Date().getFullYear()} ${COMPANY}</p>
       </div>
     </div>
-    <span class="ex-none" id="ex-none" role="status" hidden>${u.noResults}</span>
-    <a class="ex-grid" href="${localPath(lang, '/')}">${u.gridView}</a>
+  </div>
+  <div class="ex-dock">
+    <div class="ex-suggest" id="ex-suggest" role="listbox" aria-label="${esc(u.findTool)}" data-popular="${POPULAR.map(([slug]) => slug).join(',')}" data-recent-label="${esc(u.recentLabel)}" data-popular-label="${esc(u.footerCols.popular)}" data-none="${esc(u.noResults)}" hidden></div>
+    <div class="ex-bar">
+      <div class="ex-search"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="search" id="ex-q" placeholder="${esc(u.searchPlaceholder)}" aria-label="${esc(u.searchLabel)}" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ex-suggest" aria-autocomplete="list"><kbd class="ex-kbd" aria-hidden="true">/</kbd></div>
+      <div class="ex-cats">
+        <button type="button" class="ex-cat-btn" id="ex-cat-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="ex-cat-menu"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="ex-cat-label">${u.allTools}</span><svg class="ex-caret" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="ex-cat-menu" id="ex-cat-menu" role="menu" aria-label="${esc(u.categoriesLabel)}" hidden>
+          <button type="button" role="menuitemradio" aria-checked="true" data-cat=""><span>${u.allTools}</span><b>${cards(tools).length}</b></button>
+          ${categories
+            .filter((c) => cards(byCategory(c.id)).length)
+            .map((base) => {
+              const c = catIn(base, lang);
+              return `<button type="button" role="menuitemradio" aria-checked="false" data-cat="${c.id}">${categoryIcon(c, 15)}<span>${esc(c.name)}</span><b>${cards(byCategory(c.id)).length}</b></button>`;
+            })
+            .join('')}
+        </div>
+      </div>
+      <button type="button" class="ex-dice" id="ex-dice" aria-label="${esc(u.surprise)}" title="${esc(u.surprise)}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg></button>
+    </div>
   </div>
   <p class="ex-hint" id="ex-hint" aria-hidden="true">${u.exploreHint}</p>
 </div>`,

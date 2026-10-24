@@ -2,7 +2,7 @@
 // scroll or swipe to move around; cards wrap at the edges so there's no end. Cards sit a little
 // tilted and bob gently, and a slower, blurred copy of them drifts behind for depth. Without this
 // script the page is a normal grid.
-import { $ } from './ui.js';
+import { $, escapeHtml, recentTools } from './ui.js';
 
 const box = $('#explore');
 const grid = $('#world .tool-grid');
@@ -138,10 +138,12 @@ function frame(now) {
 }
 
 // Drag with mouse, finger or pen. A drag that moves more than a few pixels isn't a click.
+// The floating controls take their own clicks and scrolling; the canvas doesn't move under them.
+const CONTROLS = '.ex-dock, .ex-corner, .ex-logo';
 let start = null;
 let moved = 0;
 box.addEventListener('pointerdown', (e) => {
-  if (e.button !== 0 || e.target.closest('.ex-bar')) return;
+  if (e.button !== 0 || e.target.closest(CONTROLS)) return;
   start = { x: e.clientX, y: e.clientY, panX, panY };
   moved = 0;
   target = null;
@@ -192,7 +194,7 @@ box.addEventListener(
 box.addEventListener(
   'wheel',
   (e) => {
-    if (e.ctrlKey) return; // pinch-zoom stays the browser's
+    if (e.ctrlKey || e.target.closest(CONTROLS)) return; // pinch-zoom stays the browser's; menus scroll themselves
     e.preventDefault();
     target = null;
     panX -= e.deltaX;
@@ -232,26 +234,155 @@ function centre(it) {
   idleSince = performance.now();
 }
 
-// --- search ---------------------------------------------------------------------------------------
+// --- search: suggestions open above the dock and the canvas glides to the highlighted tool ----------
 
-input?.addEventListener('input', () => {
+const suggest = $('#ex-suggest');
+let options = []; // the items listed in the suggestions
+let active = -1;
+
+const matches = (it, words) => words.every((w) => it.card.dataset.search.includes(w));
+
+function showSuggest(open) {
+  suggest.hidden = !open;
+  input.setAttribute('aria-expanded', String(open));
+}
+
+function setActive(i) {
+  active = i;
+  suggest.querySelectorAll('[role="option"]').forEach((o, j) => o.setAttribute('aria-selected', String(j === i)));
+  input.setAttribute('aria-activedescendant', i >= 0 ? `ex-opt-${i}` : '');
+  if (i >= 0) {
+    suggest.querySelector(`#ex-opt-${i}`)?.scrollIntoView({ block: 'nearest' });
+    centre(options[i]);
+  }
+}
+
+// Typing filters; with the box empty it offers the tools used last, or the popular ones.
+function refresh() {
   const words = input.value.toLowerCase().split(/\s+/).filter(Boolean);
-  let first = null;
+  let label = '';
+  if (words.length) options = shown.filter((it) => it.card && matches(it, words)).slice(0, 6);
+  else {
+    const bySlug = (slug) => shown.find((it) => it.card?.dataset.slug === slug);
+    const recent = recentTools().map(bySlug).filter(Boolean);
+    options = (recent.length ? recent : suggest.dataset.popular.split(',').map(bySlug).filter(Boolean)).slice(0, 5);
+    label = recent.length ? suggest.dataset.recentLabel : suggest.dataset.popularLabel;
+  }
   for (const it of shown) {
-    const hit = it.card ? words.every((w) => it.card.dataset.search.includes(w)) : !words.length;
-    it.el.classList.toggle('ex-dim', words.length > 0 && !hit);
+    const hit = !words.length || (it.card && matches(it, words));
+    it.el.classList.toggle('ex-dim', !hit);
     it.el.classList.toggle('ex-match', words.length > 0 && hit);
     if (it.card) it.card.tabIndex = hit ? 0 : -1;
-    if (hit && it.card && !first) first = it;
   }
-  centre(words.length && first ? first : hero);
-  $('#ex-none').hidden = !words.length || Boolean(first);
+  suggest.innerHTML =
+    (label && options.length ? `<p class="ex-suggest-label">${escapeHtml(label)}</p>` : '') +
+    (options.length
+      ? options
+          .map(
+            (it, i) =>
+              `<div role="option" id="ex-opt-${i}" class="ex-opt" data-i="${i}" aria-selected="false">${it.card.querySelector('.tool-icon')?.outerHTML ?? ''}<span><b>${escapeHtml(it.card.querySelector('strong').textContent)}</b><small>${escapeHtml(it.card.querySelector('.desc')?.textContent ?? '')}</small></span></div>`,
+          )
+          .join('')
+      : `<p class="ex-suggest-empty">${escapeHtml(suggest.dataset.none)}</p>`);
+  showSuggest(document.activeElement === input);
+  setActive(words.length && options.length ? 0 : -1);
+  if (words.length && !options.length) centre(hero);
   hideHint();
+}
+
+input.addEventListener('focus', refresh);
+input.addEventListener('input', refresh);
+input.addEventListener('blur', () => setTimeout(() => document.activeElement !== input && showSuggest(false), 120));
+input.addEventListener('keydown', (e) => {
+  const n = options.length;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (n) setActive(((active < 0 ? (e.key === 'ArrowDown' ? -1 : 0) : active) + (e.key === 'ArrowDown' ? 1 : n - 1)) % n);
+  } else if (e.key === 'Enter') {
+    const it = options[active >= 0 ? active : 0];
+    if (it) {
+      e.preventDefault();
+      it.card.click();
+    }
+  } else if (e.key === 'Escape') {
+    if (input.value) {
+      input.value = '';
+      refresh();
+    } else input.blur();
+  }
 });
-input?.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter') return;
-  const first = items.find((i) => i.card && i.el.classList.contains('ex-match'));
-  if (first) first.card.click();
+// Keep focus in the box while choosing with the mouse, then open the tool.
+suggest.addEventListener('pointerdown', (e) => e.preventDefault());
+suggest.addEventListener('click', (e) => {
+  const o = e.target.closest('[data-i]');
+  if (o) options[Number(o.dataset.i)]?.card.click();
+});
+suggest.addEventListener('pointermove', (e) => {
+  const o = e.target.closest('[data-i]');
+  if (o && Number(o.dataset.i) !== active) setActive(Number(o.dataset.i));
+});
+
+// "/" or Ctrl/⌘+K anywhere jumps to the search box.
+addEventListener(
+  'keydown',
+  (e) => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName ?? '');
+    if ((e.key === '/' && !typing) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      input.focus();
+    }
+  },
+  true,
+);
+
+// --- corner controls: logo, theme, more menu; and the dice ------------------------------------------
+
+$('#ex-logo').addEventListener('click', (e) => {
+  e.preventDefault();
+  centre(hero);
+});
+$('#ex-theme').addEventListener('click', () => $('#theme-toggle')?.click());
+
+const moreBtn = $('#ex-more-btn');
+const moreMenu = $('#ex-more-menu');
+const moreItems = [...moreMenu.querySelectorAll('[role="menuitem"]')];
+function openMore(open) {
+  moreMenu.hidden = !open;
+  moreBtn.setAttribute('aria-expanded', String(open));
+  if (open) moreItems[0].focus();
+}
+moreBtn.addEventListener('click', () => openMore(moreMenu.hidden));
+moreMenu.addEventListener('keydown', (e) => {
+  const i = moreItems.indexOf(document.activeElement);
+  const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: moreItems.length - 1 }[e.key];
+  if (to !== undefined) {
+    e.preventDefault();
+    moreItems[(to + moreItems.length) % moreItems.length].focus();
+  } else if (e.key === 'Escape') {
+    openMore(false);
+    moreBtn.focus();
+  }
+});
+addEventListener('pointerdown', (e) => {
+  if (!moreMenu.hidden && !e.target.closest('.ex-more')) openMore(false);
+});
+
+// Surprise me: glide to a random tool and give it a little bounce.
+let lastPick = null;
+const dice = $('#ex-dice');
+dice.addEventListener('click', () => {
+  const pool = shown.filter((it) => it.card && it !== lastPick && !it.el.classList.contains('ex-dim'));
+  const it = pool[Math.floor(Math.random() * pool.length)];
+  if (!it) return;
+  lastPick = it;
+  centre(it);
+  for (const el of [it.el, dice]) {
+    el.classList.remove('ex-pick');
+    void el.offsetWidth;
+    el.classList.add('ex-pick');
+  }
+  hideHint();
 });
 
 // --- start ----------------------------------------------------------------------------------------

@@ -52,6 +52,10 @@ export const UI = {
     gridView: 'Grid view',
     allTools: 'All tools',
     categoriesLabel: 'Categories',
+    moreLabel: 'More',
+    surprise: 'Surprise me',
+    recentLabel: 'Recently used',
+    backToMiddle: 'Back to the middle',
     anySize: 'Any size',
   },
   th: {
@@ -99,6 +103,10 @@ export const UI = {
     gridView: 'มุมมองตาราง',
     allTools: 'เครื่องมือทั้งหมด',
     categoriesLabel: 'หมวดหมู่',
+    moreLabel: 'เพิ่มเติม',
+    surprise: 'สุ่มเครื่องมือ',
+    recentLabel: 'ใช้ล่าสุด',
+    backToMiddle: 'กลับไปตรงกลาง',
     anySize: 'ขนาดอื่น ๆ',
   },
 };

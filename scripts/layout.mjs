@@ -48,7 +48,7 @@ export function hideFromLayout({ tools = [], categories = [] }) {
 }
 const navItems = () => NAV.filter(([, id]) => !hidden.categories.has(id));
 
-const POPULAR = [
+export const POPULAR = [
   ['image-converter', { en: 'Image Converter', th: 'แปลงไฟล์รูป' }],
   ['image-compressor', { en: 'Image Compressor', th: 'ย่อขนาดรูป' }],
   ['qr-code-generator', { en: 'QR Code Generator', th: 'สร้าง QR Code' }],
@@ -66,7 +66,7 @@ function footerColumns(lang, categoryNames) {
   ];
 }
 
-const THEME_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>';
+export const THEME_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>';
 const SEARCH_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
 /**
