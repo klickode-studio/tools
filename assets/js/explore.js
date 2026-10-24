@@ -14,6 +14,13 @@ const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const small = matchMedia('(max-width: 640px)');
 
 document.body.classList.add('ex-live');
+// The welcome card's entrance plays once per visit; after that the page just appears.
+try {
+  if (sessionStorage.getItem('kt-world-seen')) document.body.classList.add('ex-seen');
+  else sessionStorage.setItem('kt-world-seen', '1');
+} catch {
+  // Storage blocked: play it every time.
+}
 
 // A fixed-seed random, so the layout is the same on every visit.
 let seed = 7;
@@ -76,26 +83,36 @@ const sizeOf = (list) => ({ w: Math.max(...list.map((i) => i.el.offsetWidth)), h
 // a card is always off screen when it wraps round to the other side.
 function layoutField(base) {
   scale = base;
-  const { w, h } = sizeOf(shown);
+  const tools = shown.filter((i) => i.card);
+  const { w, h } = sizeOf(tools);
   const cardW = w * scale;
   const cardH = h * scale;
-  const n = shown.length;
+  const heroW = hero.el.offsetWidth * scale;
+  const heroH = hero.el.offsetHeight * scale;
+  const n = tools.length + 2; // the welcome card takes two cells side by side
   const cols = Math.max(3, Math.ceil(Math.sqrt(n * 1.6)));
   const rows = Math.ceil(n / cols);
   const gapX = small.matches ? 44 : 120;
   const gapY = small.matches ? 40 : 100;
-  const cellW = Math.max(cardW + gapX, Math.ceil((box.clientWidth + cardW * 2) / cols));
-  const cellH = Math.max(cardH + gapY, Math.ceil((box.clientHeight + cardH * 2) / rows));
+  const cellW = Math.max(cardW + gapX, (heroW + gapX) / 2, Math.ceil((box.clientWidth + cardW * 2) / cols));
+  const cellH = Math.max(cardH + gapY, heroH + gapY, Math.ceil((box.clientHeight + cardH * 2) / rows));
   tileW = cols * cellW;
   tileH = rows * cellH;
-  margin = cardW;
-  // Each card moves at most a third of the spare room either way, so neighbours keep a gap.
-  shown.forEach((it, i) => {
-    const c = i % cols;
-    const r = Math.floor(i / cols);
-    it.x = c * cellW + (cellW - cardW) / 2 + (rand() - 0.5) * (cellW - cardW) * 0.6;
-    it.y = r * cellH + (cellH - cardH) / 2 + (c % 2 ? cellH * 0.38 : 0) + (rand() - 0.5) * (cellH - cardH) * 0.6;
-  });
+  margin = Math.max(cardW, heroW);
+  hero.x = cellW - heroW / 2;
+  hero.y = (cellH - heroH) / 2;
+  // The other cells, left to right and top to bottom. Columns from the third on alternate up and
+  // down a little; the welcome card's two columns stay level so nothing wraps into it. Each card
+  // moves at most a third of its spare room either way, so neighbours always keep a gap.
+  let i = 0;
+  for (let r = 0; r < rows && i < tools.length; r++) {
+    for (let c = 0; c < cols && i < tools.length; c++) {
+      if (r === 0 && c < 2) continue;
+      const it = tools[i++];
+      it.x = c * cellW + (cellW - cardW) / 2 + (rand() - 0.5) * (cellW - cardW) * 0.6;
+      it.y = r * cellH + (cellH - cardH) / 2 + (c > 1 && c % 2 ? cellH * 0.38 : 0) + (rand() - 0.5) * (cellH - cardH) * 0.6;
+    }
+  }
 }
 
 // Orbit: the category's tools evenly round an ellipse with the welcome card in the middle. The

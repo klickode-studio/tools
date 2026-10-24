@@ -372,7 +372,7 @@ for (const lang of LANG_IDS) {
       styles: ['/assets/css/explore.css'],
       bodyAttrs: ' data-page="explore"',
       body: `<div class="explore" id="explore" tabindex="-1">
-  <div class="ex-world" id="world"><div class="ex-hero" id="ex-hero"><img src="/assets/brand/mark.svg" alt="" width="76" height="76"><p class="eyebrow">${u.eyebrow(cards(tools).length)}</p><h1>${u.exploreTitle}</h1><p>${u.exploreLede}</p></div>${toolGrid(cards(tools).map((t) => toolIn(t, lang)), catOfIn(lang))}</div>
+  <div class="ex-world" id="world"><div class="ex-hero" id="ex-hero"><img class="hx-mark" src="/assets/brand/mark.svg" alt="" width="120" height="120"><div class="hx-text"><p class="eyebrow">${u.eyebrow(cards(tools).length)}</p><h1 class="hx-title">${u.worldTitle.map((w, i) => `<span${i === u.worldTitle.length - 1 ? ' class="hx-red"' : ''}>${w}</span>`).join(' ')}</h1><p class="hx-lede">${u.worldLede}</p><p class="hx-chips">${u.worldChips(cards(tools).length).map((c) => `<span>${c}</span>`).join('')}</p></div></div>${toolGrid(cards(tools).map((t) => toolIn(t, lang)), catOfIn(lang))}</div>
   <a class="ex-logo" id="ex-logo" href="${path}" title="${esc(u.backToMiddle)}"><img src="/assets/brand/mark.svg" alt="" width="30" height="30"><span class="brand-text"><span class="brand-name">Klickode</span><span class="brand-tag">Tools</span></span></a>
   <div class="ex-corner">
     <a class="ex-pill" href="${localPath(other, '/explore/')}" hreflang="${other}" lang="${other}" title="${esc(u.switchTo)}">${LANGS[other].short}</a>
