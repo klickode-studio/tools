@@ -12,22 +12,21 @@ body[data-page='explore'] main > .wrap { max-width: none; padding: 0; }
 .explore { position: relative; padding: 24px 20px 120px; }
 .explore:focus { outline: none; }
 /* The welcome card: the mascot on the left, the promise on the right. */
-.ex-hero { max-width: 680px; margin: 8px auto 28px; padding: 30px 34px; display: grid; grid-template-columns: auto 1fr; column-gap: 28px; align-items: center; border: 1px solid var(--border); border-radius: 24px; background: var(--surface); box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 30px 60px -32px rgba(24, 24, 27, 0.4); }
-.hx-mark { width: 120px; height: 120px; display: block; filter: drop-shadow(0 14px 24px rgba(224, 49, 49, 0.35)); }
+.ex-hero { max-width: 500px; margin: 8px auto 28px; padding: 30px 34px 32px; display: grid; grid-template-columns: 1fr; justify-items: center; text-align: center; border: 1px solid var(--border); border-radius: 24px; background: var(--surface); box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 30px 60px -32px rgba(24, 24, 27, 0.4); }
+.hx-mark { width: 88px; height: 88px; display: block; margin: 0 0 16px; filter: drop-shadow(0 14px 24px rgba(224, 49, 49, 0.35)); }
 .ex-hero .eyebrow { display: none; margin: 0 0 6px; }
-.hx-title { margin: 0; font-size: 40px; line-height: 1.04; letter-spacing: -0.035em; font-weight: 800; }
+.hx-title { margin: 0; font-size: 38px; line-height: 1.04; letter-spacing: -0.035em; font-weight: 800; }
 .hx-title span { display: inline-block; }
 .hx-red { color: var(--red); }
-.hx-lede { margin: 12px 0 0; max-width: 440px; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
-.hx-chips { margin: 16px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.hx-lede { margin: 12px auto 0; max-width: 400px; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
+.hx-chips { margin: 16px 0 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; }
 .hx-chips span { padding: 5px 11px; border: 1px solid var(--border); border-radius: 999px; background: var(--bar); font: 600 11px var(--mono); letter-spacing: 0.03em; color: var(--muted); white-space: nowrap; }
 .hx-chips b { color: var(--red); }
 :lang(th) .hx-title { font-size: 34px; line-height: 1.25; letter-spacing: 0; }
 :lang(th) .hx-chips span { font-family: var(--sans); font-size: 12px; letter-spacing: 0; }
-@media (max-width: 560px) { .ex-hero:not(.ex-item *) { grid-template-columns: 1fr; text-align: center; } .ex-hero:not(.ex-item *) .hx-mark { margin: 0 auto 14px; } .ex-hero:not(.ex-item *) .hx-chips { justify-content: center; } }
 /* In a category's orbit the card shrinks to the mascot, the category and the headline. */
-.ex-orbit .ex-hero { padding: 22px 26px; column-gap: 20px; }
-.ex-orbit .hx-mark { width: 84px; height: 84px; }
+.ex-orbit .ex-hero { padding: 22px 26px; }
+.ex-orbit .hx-mark { width: 64px; height: 64px; margin-bottom: 10px; }
 .ex-orbit .ex-hero .eyebrow { display: block; }
 .ex-orbit .hx-title { font-size: 30px; }
 .ex-orbit .hx-lede, .ex-orbit .hx-chips { display: none; }
@@ -131,8 +130,8 @@ body.ex-live main > .wrap { height: 100%; }
 
 /* Each floating card: placed by explore.js, tilted a little (--rot), straightening on hover. */
 .ex-item { position: absolute; left: 0; top: 0; width: 290px; transform-origin: 0 0; will-change: transform; }
-.ex-item.ex-hero-item { width: 680px; }
-.ex-orbit .ex-item.ex-hero-item { width: 470px; }
+.ex-item.ex-hero-item { width: 500px; }
+.ex-orbit .ex-item.ex-hero-item { width: 380px; }
 .ex-item > .tool-card, .ex-item > .ex-hero { width: 100%; transform: rotate(var(--rot, 0deg)); transition: opacity 0.6s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s, box-shadow 0.3s; -webkit-user-drag: none; }
 .ex-item > .tool-card:hover, .ex-item > .tool-card:focus-visible { transform: rotate(0deg) translateY(-4px) scale(1.03); }
 .ex-item img, .ex-item svg { -webkit-user-drag: none; pointer-events: none; }

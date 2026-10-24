@@ -36,7 +36,7 @@ function float(el, cls, rot) {
 }
 
 // The welcome card floats with the others, first in line, so the page opens on it.
-const hero = { el: float(heroCard, 'ex-item ex-hero-item', -1.5), card: null, depth: 1, phase: 0 };
+const hero = { el: float(heroCard, 'ex-item ex-hero-item', 0), card: null, depth: 1, phase: 0 };
 grid.prepend(hero.el);
 const items = [
   hero,
