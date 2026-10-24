@@ -254,6 +254,17 @@ let failures = 0;
   await page.click('#ex-cat-btn'); await page.click('#ex-cat-menu [data-cat="images"]'); await page.waitForTimeout(500);
   const shownCats = await page.evaluate(() => [...new Set([...document.querySelectorAll('.ex-item:not([hidden]) .tool-card')].map((c) => c.dataset.category))]);
   check('explore category menu', shownCats.join() === 'images' && page.url().endsWith('?cat=images') && (await page.isHidden('#ex-cat-menu')), shownCats);
+  // No two floating cards ever overlap, in the scattered field or a category's orbit.
+  const overlapping = () => page.evaluate(() => {
+    const r = [...document.querySelectorAll('.ex-item:not([hidden])')].map((e) => e.firstElementChild.getBoundingClientRect());
+    let n = 0;
+    for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) if (r[i].left < r[j].right - 1 && r[j].left < r[i].right - 1 && r[i].top < r[j].bottom - 1 && r[j].top < r[i].bottom - 1) n++;
+    return n;
+  });
+  await page.waitForTimeout(1200);
+  check('explore orbit: no overlaps', (await overlapping()) === 0 && (await page.$eval('#explore', (e) => e.classList.contains('ex-orbit'))));
+  await page.click('#ex-cat-btn'); await page.click('#ex-cat-menu [data-cat=""]'); await page.waitForTimeout(1200);
+  check('explore field: no overlaps', (await overlapping()) === 0);
   await page.goto(B + '/th/explore/?cat=json'); await page.waitForTimeout(300);
   check('explore category link', (await page.locator('.ex-item:not([hidden]) .tool-card').count()) === (await page.locator('#ex-cat-menu [data-cat="json"] b').innerText()) * 1);
 

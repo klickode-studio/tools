@@ -1,7 +1,8 @@
 // Explore: every tool card floating on an endless canvas, around a Klickode welcome card. Drag,
 // scroll or swipe to move around; cards wrap at the edges so there's no end. Cards sit a little
-// tilted and bob gently, and a slower, blurred copy of them drifts behind for depth. Without this
-// script the page is a normal grid.
+// tilted and bob gently, never touching; faint category icons and the dot grid drift behind at a
+// slower pace for depth. Pick a category and its tools line up in an orbit around the welcome card,
+// zoomed to fit the screen. Without this script the page is a normal grid.
 import { $, escapeHtml, recentTools } from './ui.js';
 
 const box = $('#explore');
@@ -38,49 +39,132 @@ const items = [
   }),
 ];
 let shown = items; // the welcome card plus the chosen category's tools
-// The far layer: copies of the cards, hidden from assistive tech and the keyboard.
-const ghosts = items.slice(1).map(({ card, cat }) => {
-  const el = document.createElement('div');
-  el.className = 'ex-ghost';
-  el.setAttribute('aria-hidden', 'true');
-  el.inert = true;
-  const copy = card.cloneNode(true);
-  copy.removeAttribute('href');
-  el.append(copy);
-  grid.prepend(el);
-  return { el, cat, depth: 0.45, scale: 0.42 + rand() * 0.12, phase: rand() * Math.PI * 2 };
-});
+let activeCat = '';
 
-let scale = 1; // cards are drawn smaller on phones so more of them float in view
+// The far layer: small, faint category icons, behind the cards. Small enough that passing behind a
+// card never looks like two cards on top of each other.
+const icons = [...document.querySelectorAll('#ex-cat-menu [data-cat] svg')].map((svg) => [svg.closest('[data-cat]').dataset.cat, svg]);
+const motes = Array.from({ length: icons.length ? 18 : 0 }, (_, i) => {
+  const [cat, svg] = icons[i % icons.length];
+  const el = document.createElement('span');
+  el.className = 'ex-mote';
+  el.dataset.category = cat;
+  el.setAttribute('aria-hidden', 'true');
+  el.append(svg.cloneNode(true));
+  grid.prepend(el);
+  return { el, depth: 0.35 + rand() * 0.15, phase: rand() * Math.PI * 2, size: 0.8 + rand() * 0.7 };
+});
+// The dot grid moves too, slower still.
+const dots = document.createElement('div');
+dots.className = 'ex-dots';
+dots.setAttribute('aria-hidden', 'true');
+box.prepend(dots);
+
+let mode = 'field'; // 'field': every tool scattered; 'orbit': one category around the welcome card
+let scale = 1; // how big cards are drawn: smaller on phones, and zoomed out to fit an orbit
 let tileW = 0;
 let tileH = 0;
-let cellW = 0;
+let margin = 0; // a card's width on screen: how far off screen a card goes before it wraps round
+let ring = null; // { cx, cy, rx, ry, n } for the orbit, in screen pixels
+let spin = 0;
+let hovering = false;
 
-// Cards sit on a loose grid inside a tile at least a card bigger than the screen, so a card is
-// always off screen when it wraps round to the other side.
-function layout() {
-  seed = 11;
-  scale = small.matches ? 0.55 : 1;
-  const cardW = items[1].el.offsetWidth * scale;
-  const cardH = Math.max(...shown.map((i) => i.el.offsetHeight)) * scale;
+const sizeOf = (list) => ({ w: Math.max(...list.map((i) => i.el.offsetWidth)), h: Math.max(...list.map((i) => i.el.offsetHeight)) });
+
+// Scattered field: a loose grid with cells big enough for the largest card, so cards never touch
+// however they're nudged, tilted or bobbing. The tile is at least a card bigger than the screen, so
+// a card is always off screen when it wraps round to the other side.
+function layoutField(base) {
+  scale = base;
+  const { w, h } = sizeOf(shown);
+  const cardW = w * scale;
+  const cardH = h * scale;
   const n = shown.length;
   const cols = Math.max(3, Math.ceil(Math.sqrt(n * 1.6)));
   const rows = Math.ceil(n / cols);
-  const gapX = small.matches ? 40 : 110;
-  const gapY = small.matches ? 36 : 90;
-  cellW = Math.max(cardW + gapX, Math.ceil((box.clientWidth + cardW * 2) / cols));
+  const gapX = small.matches ? 44 : 120;
+  const gapY = small.matches ? 40 : 100;
+  const cellW = Math.max(cardW + gapX, Math.ceil((box.clientWidth + cardW * 2) / cols));
   const cellH = Math.max(cardH + gapY, Math.ceil((box.clientHeight + cardH * 2) / rows));
   tileW = cols * cellW;
   tileH = rows * cellH;
+  margin = cardW;
+  // Each card moves at most a third of the spare room either way, so neighbours keep a gap.
   shown.forEach((it, i) => {
     const c = i % cols;
     const r = Math.floor(i / cols);
-    it.x = c * cellW + (rand() - 0.5) * (cellW - cardW) * 0.7;
-    it.y = r * cellH + (c % 2 ? cellH * 0.38 : 0) + (rand() - 0.5) * (cellH - cardH) * 0.6;
+    it.x = c * cellW + (cellW - cardW) / 2 + (rand() - 0.5) * (cellW - cardW) * 0.6;
+    it.y = r * cellH + (cellH - cardH) / 2 + (c % 2 ? cellH * 0.38 : 0) + (rand() - 0.5) * (cellH - cardH) * 0.6;
   });
-  for (const g of ghosts) {
-    g.x = rand() * tileW;
-    g.y = rand() * tileH;
+}
+
+// Orbit: the category's tools evenly round an ellipse with the welcome card in the middle. The
+// ellipse grows until no two cards (or a card and the middle one) could touch at any point as it
+// turns, then the whole thing is zoomed to fit between the corner controls and the dock.
+function layoutOrbit(base) {
+  const tools = shown.filter((i) => i.card);
+  const n = tools.length;
+  const { w, h } = sizeOf(tools);
+  const hw = hero.el.offsetWidth;
+  const hh = hero.el.offsetHeight;
+  const gap = 34;
+  const top = 76;
+  const bottom = 104;
+  const availW = box.clientWidth - 32;
+  const availH = box.clientHeight - top - bottom;
+  // Wide screens get a wide oval, phones held upright a tall one, so the orbit uses the space there is.
+  const aspect = Math.min(1.9, Math.max(0.5, (availW - w) / Math.max(availH - h, 1)));
+  const clear = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 >= aw + bw + gap * 2 || Math.abs(ay - by) * 2 >= ah + bh + gap * 2;
+  const fits = (rx, ry) => {
+    for (let k = 0; k < 8; k++) {
+      const turn = (k / 8) * ((2 * Math.PI) / n);
+      const pts = tools.map((_, i) => {
+        const a = -Math.PI / 2 + turn + (i * 2 * Math.PI) / n;
+        return [rx * Math.cos(a), ry * Math.sin(a)];
+      });
+      for (let i = 0; i < n; i++) {
+        if (!clear(pts[i][0], pts[i][1], w, h, 0, 0, hw, hh)) return false;
+        for (let j = i + 1; j < n; j++) if (!clear(pts[i][0], pts[i][1], w, h, pts[j][0], pts[j][1], w, h)) return false;
+      }
+    }
+    return true;
+  };
+  let ry = Math.max(hh, h) / 2;
+  while (!fits(ry * aspect, ry) && ry < 4000) ry += 8;
+  const rx = ry * aspect;
+  scale = Math.min(base, availW / (rx * 2 + w), availH / (ry * 2 + h));
+  // A big tile, so the next copy of the orbit is well off screen.
+  tileW = (rx * 2 + w) * scale + box.clientWidth * 2;
+  tileH = (ry * 2 + h) * scale + box.clientHeight * 2;
+  margin = w * scale;
+  ring = { cx: tileW / 2, cy: tileH / 2, rx: rx * scale, ry: ry * scale, n, w: w * scale, h: h * scale };
+  hero.x = ring.cx - (hw * scale) / 2;
+  hero.y = ring.cy - (hh * scale) / 2;
+  tools.forEach((it, i) => (it.slot = i));
+  orbit();
+}
+
+// Where each card sits on the orbit right now.
+function orbit() {
+  for (const it of shown) {
+    if (!it.card) continue;
+    const a = -Math.PI / 2 + spin + (it.slot * 2 * Math.PI) / ring.n;
+    it.x = ring.cx + ring.rx * Math.cos(a) - ring.w / 2;
+    it.y = ring.cy + ring.ry * Math.sin(a) - ring.h / 2;
+  }
+}
+
+function layout() {
+  seed = 11;
+  const base = small.matches ? 0.55 : 1;
+  const tools = shown.length - 1;
+  mode = activeCat && tools >= 2 && tools <= 12 ? 'orbit' : 'field';
+  box.classList.toggle('ex-orbit', mode === 'orbit');
+  if (mode === 'orbit') layoutOrbit(base);
+  else layoutField(base);
+  for (const m of motes) {
+    m.x = rand() * tileW;
+    m.y = rand() * tileH;
   }
 }
 
@@ -100,29 +184,34 @@ let dragging = false;
 let idleSince = performance.now();
 let target = null; // { x, y } pan to glide to (search, keyboard focus)
 let clock = 0;
+let last = 0;
 
 const wrap = (v, size) => ((v % size) + size) % size;
 
 function place(it, s = 1) {
-  const bob = still ? 0 : Math.sin(clock * 0.0011 + it.phase) * 6 * scale;
-  const x = wrap(it.x + panX * it.depth + parX * it.depth * 26 + cellW, tileW) - cellW;
-  const y = wrap(it.y + panY * it.depth + parY * it.depth * 18 + bob + cellW, tileH) - cellW;
+  const bob = still ? 0 : Math.sin(clock * 0.0011 + it.phase) * 5 * scale;
+  const x = wrap(it.x + panX * it.depth + parX * it.depth * 26 + margin, tileW) - margin;
+  const y = wrap(it.y + panY * it.depth + parY * it.depth * 18 + bob + margin, tileH) - margin;
   it.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${(s * scale).toFixed(3)})`;
   it.sx = x;
   it.sy = y;
 }
 
 function frame(now) {
+  const dt = Math.min(64, now - (last || now));
+  last = now;
   clock = now;
   if (target) {
     velX = (target.x - panX) * 0.08;
     velY = (target.y - panY) * 0.08;
     if (Math.abs(target.x - panX) < 0.5 && Math.abs(target.y - panY) < 0.5) target = null;
   } else if (!dragging) {
-    // Momentum fades out, then the canvas settles into a slow drift.
+    // Momentum fades out, then the field settles into a slow drift (an orbit stays put and turns).
     const settled = now - idleSince > 1200;
-    velX = still ? 0 : velX * 0.94 + (settled ? (DRIFT_X - velX) * 0.02 : 0);
-    velY = still ? 0 : velY * 0.94 + (settled ? (DRIFT_Y - velY) * 0.02 : 0);
+    const dx = mode === 'field' ? DRIFT_X : 0;
+    const dy = mode === 'field' ? DRIFT_Y : 0;
+    velX = still ? 0 : velX * 0.94 + (settled ? (dx - velX) * 0.02 : 0);
+    velY = still ? 0 : velY * 0.94 + (settled ? (dy - velY) * 0.02 : 0);
   }
   if (!dragging) {
     panX += velX;
@@ -132,10 +221,20 @@ function frame(now) {
     parX += (mouseX - parX) * 0.05;
     parY += (mouseY - parY) * 0.05;
   }
-  for (const g of ghosts) if (!g.el.hidden) place(g, g.scale);
+  // The orbit turns once every two minutes, and holds still while a card is under the pointer.
+  if (mode === 'orbit' && !still && !hovering && !dragging) {
+    spin += (dt * 2 * Math.PI) / 120000;
+    orbit();
+  }
+  for (const m of motes) {
+    place(m, m.size);
+  }
+  dots.style.transform = `translate3d(${(wrap(panX * 0.3, 22) - 22).toFixed(1)}px, ${(wrap(panY * 0.3, 22) - 22).toFixed(1)}px, 0)`;
   for (const it of shown) place(it);
   requestAnimationFrame(frame);
 }
+grid.addEventListener('pointerover', (e) => (hovering = Boolean(e.target.closest('.ex-item .tool-card'))));
+grid.addEventListener('pointerleave', () => (hovering = false));
 
 // Drag with mouse, finger or pen. A drag that moves more than a few pixels isn't a click.
 // The floating controls take their own clicks and scrolling; the canvas doesn't move under them.
@@ -436,9 +535,10 @@ async function showCategory(id, animate = true) {
     box.classList.add('ex-out');
     await new Promise((r) => setTimeout(r, 260));
   }
+  activeCat = id;
+  spin = 0;
   shown = items.filter((it) => !it.card || !id || it.cat === id);
   for (const it of items) it.el.hidden = !shown.includes(it);
-  for (const g of ghosts) g.el.hidden = Boolean(id) && g.cat !== id;
   // The welcome card names the category and how many tools are in it.
   eyebrow.textContent = id ? `${label} · ${shown.length - 1}` : allTools;
   if (input.value) {

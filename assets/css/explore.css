@@ -67,7 +67,6 @@ body[data-page='explore'] main > .wrap { max-width: none; padding: 0; }
 .ex-more-menu a[role='menuitem'] { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; color: var(--text); font-size: 14px; text-decoration: none; }
 .ex-more-menu a[role='menuitem']:hover, .ex-more-menu a[role='menuitem']:focus-visible { background: var(--mist); outline: none; }
 .ex-more-menu .ex-sub { padding-left: 14px; color: var(--muted); font-size: 13.5px; }
-.ex-more-menu .ex-sub svg { color: var(--faint); }
 .ex-more-menu hr { margin: 6px 8px; border: 0; border-top: 1px solid var(--border); }
 .ex-legal { margin: 4px 10px 6px; font-size: 11.5px; line-height: 1.7; color: var(--faint); }
 .ex-legal a { color: inherit; }
@@ -106,11 +105,10 @@ body.ex-live main > .wrap { height: 100%; }
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  background:
-    radial-gradient(55% 45% at 50% 45%, var(--glow), transparent 70%),
-    radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0) 0 0 / 22px 22px,
-    var(--bg);
+  background: radial-gradient(55% 45% at 50% 45%, var(--glow), transparent 70%), var(--bg);
 }
+/* The dot grid: a layer a little bigger than the screen, nudged by explore.js as you pan. */
+.ex-dots { position: absolute; inset: -22px -22px auto auto; width: calc(100% + 44px); height: calc(100% + 44px); background: radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0) 0 0 / 22px 22px; pointer-events: none; will-change: transform; }
 .ex-live .explore.dragging { cursor: grabbing; }
 .ex-live .ex-world { position: absolute; inset: 0; }
 .ex-live .ex-world > .tool-grid { display: block; }
@@ -130,10 +128,40 @@ body.ex-live main > .wrap { height: 100%; }
 .ex-hero-item img { animation: ex-wobble 6s ease-in-out infinite; }
 @keyframes ex-wobble { 0%, 100% { transform: rotate(-4deg) translateY(0); } 50% { transform: rotate(4deg) translateY(-6px); } }
 
-/* The far layer: small, soft, slower copies for depth. */
-.ex-ghost { position: absolute; left: 0; top: 0; width: 290px; transform-origin: 0 0; opacity: 0.3; filter: blur(1.2px) saturate(0.6); pointer-events: none; will-change: transform; }
-.ex-ghost .tool-card { box-shadow: none; }
-.ex-ghost .tool-card::after { display: none; }
+/* The far layer: small faint category icons drifting slower than the cards. */
+.ex-mote { position: absolute; left: 0; top: 0; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); opacity: 0.55; transform-origin: 0 0; pointer-events: none; will-change: transform; }
+.ex-mote svg { width: 18px; height: 18px; }
+
+/* Each category has its own accent, on its icons, its cards' top edge and its far-layer icons. */
+.explore { --accent: var(--red); }
+.explore :is([data-category='business'], [data-cat='business']) { --accent: #d97706; }
+.explore :is([data-category='images'], [data-cat='images']) { --accent: #7c3aed; }
+.explore :is([data-category='pdf'], [data-cat='pdf']) { --accent: #dc2626; }
+.explore :is([data-category='json'], [data-cat='json']) { --accent: #2563eb; }
+.explore :is([data-category='seo'], [data-cat='seo']) { --accent: #16a34a; }
+.explore :is([data-category='text'], [data-cat='text']) { --accent: #db2777; }
+.explore :is([data-category='encoding'], [data-cat='encoding']) { --accent: #0d9488; }
+:root[data-theme='dark'] .explore :is([data-category='business'], [data-cat='business']) { --accent: #fbbf24; }
+:root[data-theme='dark'] .explore :is([data-category='images'], [data-cat='images']) { --accent: #a78bfa; }
+:root[data-theme='dark'] .explore :is([data-category='pdf'], [data-cat='pdf']) { --accent: #ff6b6b; }
+:root[data-theme='dark'] .explore :is([data-category='json'], [data-cat='json']) { --accent: #60a5fa; }
+:root[data-theme='dark'] .explore :is([data-category='seo'], [data-cat='seo']) { --accent: #4ade80; }
+:root[data-theme='dark'] .explore :is([data-category='text'], [data-cat='text']) { --accent: #f472b6; }
+:root[data-theme='dark'] .explore :is([data-category='encoding'], [data-cat='encoding']) { --accent: #2dd4bf; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .explore :is([data-category='business'], [data-cat='business']) { --accent: #fbbf24; }
+  :root:not([data-theme='light']) .explore :is([data-category='images'], [data-cat='images']) { --accent: #a78bfa; }
+  :root:not([data-theme='light']) .explore :is([data-category='pdf'], [data-cat='pdf']) { --accent: #ff6b6b; }
+  :root:not([data-theme='light']) .explore :is([data-category='json'], [data-cat='json']) { --accent: #60a5fa; }
+  :root:not([data-theme='light']) .explore :is([data-category='seo'], [data-cat='seo']) { --accent: #4ade80; }
+  :root:not([data-theme='light']) .explore :is([data-category='text'], [data-cat='text']) { --accent: #f472b6; }
+  :root:not([data-theme='light']) .explore :is([data-category='encoding'], [data-cat='encoding']) { --accent: #2dd4bf; }
+}
+.ex-item > .tool-card::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: var(--accent); opacity: 0.85; z-index: 1; }
+.ex-item > .tool-card .tool-icon { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.ex-item > .tool-card:hover .tool-icon { color: #fff; background: var(--accent); }
+.ex-item > .tool-card:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+.ex-cat-menu [data-cat] svg, .ex-more-menu .ex-sub svg { color: var(--accent); }
 
 .ex-live .ex-hint { display: block; position: absolute; left: 50%; top: 24px; z-index: 4; transform: translateX(-50%); margin: 0; padding: 7px 14px; border: 1px solid var(--border); border-radius: 999px; background: color-mix(in srgb, var(--surface) 85%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--muted); font-size: 12.5px; letter-spacing: 0.02em; pointer-events: none; transition: opacity 0.6s; }
 .ex-hint.gone { opacity: 0; }

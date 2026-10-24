@@ -381,7 +381,7 @@ for (const lang of LANG_IDS) {
       <button type="button" class="ex-pill ex-icon" id="ex-more-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="ex-more-menu" aria-label="${esc(u.moreLabel)}" title="${esc(u.moreLabel)}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg></button>
       <div class="ex-more-menu" id="ex-more-menu" role="menu" aria-label="${esc(u.moreLabel)}" hidden>
         <a role="menuitem" href="${localPath(lang, '/')}">${u.gridView}</a>
-        ${categories.filter((c) => cards(byCategory(c.id)).length).map((base) => { const c = catIn(base, lang); return `<a role="menuitem" class="ex-sub" href="${localPath(lang, `/${c.slug}/`)}">${categoryIcon(c, 14)}${esc(c.name)}</a>`; }).join('')}
+        ${categories.filter((c) => cards(byCategory(c.id)).length).map((base) => { const c = catIn(base, lang); return `<a role="menuitem" class="ex-sub" data-category="${c.id}" href="${localPath(lang, `/${c.slug}/`)}">${categoryIcon(c, 14)}${esc(c.name)}</a>`; }).join('')}
         <hr>
         <a role="menuitem" href="${STUDIO_URL}">Klickode Studio <span aria-hidden="true">↗</span></a>
         <a role="menuitem" href="${CONTACT_URL}">${u.contact}</a>
