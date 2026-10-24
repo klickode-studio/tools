@@ -34,11 +34,12 @@ const items = [
   hero,
   ...[...grid.querySelectorAll('.tool-card')].map((card) => {
     card.draggable = false;
-    return { el: float(card, 'ex-item', (rand() - 0.5) * 5), card, depth: 1, phase: rand() * Math.PI * 2 };
+    return { el: float(card, 'ex-item', (rand() - 0.5) * 5), card, cat: card.dataset.category, depth: 1, phase: rand() * Math.PI * 2 };
   }),
 ];
+let shown = items; // the welcome card plus the chosen category's tools
 // The far layer: copies of the cards, hidden from assistive tech and the keyboard.
-const ghosts = items.slice(1).map(({ card }) => {
+const ghosts = items.slice(1).map(({ card, cat }) => {
   const el = document.createElement('div');
   el.className = 'ex-ghost';
   el.setAttribute('aria-hidden', 'true');
@@ -47,7 +48,7 @@ const ghosts = items.slice(1).map(({ card }) => {
   copy.removeAttribute('href');
   el.append(copy);
   grid.prepend(el);
-  return { el, depth: 0.45, scale: 0.42 + rand() * 0.12, phase: rand() * Math.PI * 2 };
+  return { el, cat, depth: 0.45, scale: 0.42 + rand() * 0.12, phase: rand() * Math.PI * 2 };
 });
 
 let scale = 1; // cards are drawn smaller on phones so more of them float in view
@@ -61,8 +62,8 @@ function layout() {
   seed = 11;
   scale = small.matches ? 0.55 : 1;
   const cardW = items[1].el.offsetWidth * scale;
-  const cardH = Math.max(...items.map((i) => i.el.offsetHeight)) * scale;
-  const n = items.length;
+  const cardH = Math.max(...shown.map((i) => i.el.offsetHeight)) * scale;
+  const n = shown.length;
   const cols = Math.max(3, Math.ceil(Math.sqrt(n * 1.6)));
   const rows = Math.ceil(n / cols);
   const gapX = small.matches ? 40 : 110;
@@ -71,7 +72,7 @@ function layout() {
   const cellH = Math.max(cardH + gapY, Math.ceil((box.clientHeight + cardH * 2) / rows));
   tileW = cols * cellW;
   tileH = rows * cellH;
-  items.forEach((it, i) => {
+  shown.forEach((it, i) => {
     const c = i % cols;
     const r = Math.floor(i / cols);
     it.x = c * cellW + (rand() - 0.5) * (cellW - cardW) * 0.7;
@@ -131,8 +132,8 @@ function frame(now) {
     parX += (mouseX - parX) * 0.05;
     parY += (mouseY - parY) * 0.05;
   }
-  for (const g of ghosts) place(g, g.scale);
-  for (const it of items) place(it);
+  for (const g of ghosts) if (!g.el.hidden) place(g, g.scale);
+  for (const it of shown) place(it);
   requestAnimationFrame(frame);
 }
 
@@ -236,7 +237,7 @@ function centre(it) {
 input?.addEventListener('input', () => {
   const words = input.value.toLowerCase().split(/\s+/).filter(Boolean);
   let first = null;
-  for (const it of items) {
+  for (const it of shown) {
     const hit = it.card ? words.every((w) => it.card.dataset.search.includes(w)) : !words.length;
     it.el.classList.toggle('ex-dim', words.length > 0 && !hit);
     it.el.classList.toggle('ex-match', words.length > 0 && hit);
@@ -262,16 +263,97 @@ setTimeout(hideHint, 4000);
 
 function begin() {
   layout();
-  for (const it of items) place(it);
+  for (const it of shown) place(it);
   ({ x: panX, y: panY } = centred(hero)); // open on the welcome card
-  for (const it of items) place(it);
+  for (const it of shown) place(it);
 }
-begin();
 // Cards float in from nearest the middle outwards.
-for (const it of items) {
-  const d = Math.hypot(it.sx - box.clientWidth / 2, it.sy - box.clientHeight / 2);
-  it.el.style.setProperty('--delay', `${Math.min(0.9, d / 1800).toFixed(2)}s`);
-  it.el.classList.add('ex-in');
+function floatIn() {
+  for (const it of shown) {
+    const d = Math.hypot(it.sx - box.clientWidth / 2, it.sy - box.clientHeight / 2);
+    it.el.style.setProperty('--delay', `${Math.min(0.9, d / 1800).toFixed(2)}s`);
+    it.el.classList.remove('ex-in');
+    void it.el.offsetWidth; // restart the animation
+    it.el.classList.add('ex-in');
+  }
+}
+
+// --- categories: a menu that opens upwards from the search bar --------------------------------------
+
+const catBtn = $('#ex-cat-btn');
+const catMenu = $('#ex-cat-menu');
+const catOptions = [...catMenu.querySelectorAll('[data-cat]')];
+const params = new URLSearchParams(location.search);
+const eyebrow = heroCard.querySelector('.eyebrow');
+const allTools = eyebrow.textContent;
+
+function openMenu(open) {
+  catMenu.hidden = !open;
+  catBtn.setAttribute('aria-expanded', String(open));
+  if (open) (catOptions.find((o) => o.getAttribute('aria-checked') === 'true') ?? catOptions[0]).focus();
+}
+
+// Swap the cards on the canvas: the old ones float away, the chosen ones float back in.
+let switching = false;
+async function showCategory(id, animate = true) {
+  if (switching) return;
+  switching = true;
+  for (const o of catOptions) o.setAttribute('aria-checked', String(o.dataset.cat === id));
+  const label = catOptions.find((o) => o.dataset.cat === id).querySelector('span').textContent;
+  $('#ex-cat-label').textContent = label;
+  if (animate && !still) {
+    box.classList.add('ex-out');
+    await new Promise((r) => setTimeout(r, 260));
+  }
+  shown = items.filter((it) => !it.card || !id || it.cat === id);
+  for (const it of items) it.el.hidden = !shown.includes(it);
+  for (const g of ghosts) g.el.hidden = Boolean(id) && g.cat !== id;
+  // The welcome card names the category and how many tools are in it.
+  eyebrow.textContent = id ? `${label} · ${shown.length - 1}` : allTools;
+  if (input.value) {
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+  }
+  begin();
+  box.classList.remove('ex-out');
+  floatIn();
+  const url = new URL(location.href);
+  if (id) url.searchParams.set('cat', id);
+  else url.searchParams.delete('cat');
+  history.replaceState(null, '', url);
+  switching = false;
+}
+
+catBtn.addEventListener('click', () => openMenu(catMenu.hidden));
+catMenu.addEventListener('click', (e) => {
+  const o = e.target.closest('[data-cat]');
+  if (!o) return;
+  openMenu(false);
+  catBtn.focus();
+  if (o.getAttribute('aria-checked') !== 'true') showCategory(o.dataset.cat);
+});
+catMenu.addEventListener('keydown', (e) => {
+  const i = catOptions.indexOf(document.activeElement);
+  const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: catOptions.length - 1 }[e.key];
+  if (to !== undefined) {
+    e.preventDefault();
+    catOptions[(to + catOptions.length) % catOptions.length].focus();
+  } else if (e.key === 'Escape' || e.key === 'Tab') {
+    openMenu(false);
+    if (e.key === 'Escape') catBtn.focus();
+  }
+});
+addEventListener('pointerdown', (e) => {
+  if (!catMenu.hidden && !e.target.closest('.ex-cats')) openMenu(false);
+});
+
+// --- start ----------------------------------------------------------------------------------------
+
+const startCat = params.get('cat');
+if (startCat && catOptions.some((o) => o.dataset.cat === startCat)) showCategory(startCat, false);
+else {
+  begin();
+  floatIn();
 }
 addEventListener('resize', layout);
 small.addEventListener('change', begin);

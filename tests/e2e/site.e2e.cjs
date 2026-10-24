@@ -242,6 +242,12 @@ let failures = 0;
   check('explore drags', (await first()) !== t0);
   await page.fill('#ex-q', 'json formatter'); await page.waitForTimeout(100);
   check('explore search', (await page.locator('.ex-item.ex-match').count()) === 1);
+  await page.fill('#ex-q', '');
+  await page.click('#ex-cat-btn'); await page.click('#ex-cat-menu [data-cat="images"]'); await page.waitForTimeout(500);
+  const shownCats = await page.evaluate(() => [...new Set([...document.querySelectorAll('.ex-item:not([hidden]) .tool-card')].map((c) => c.dataset.category))]);
+  check('explore category menu', shownCats.join() === 'images' && page.url().endsWith('?cat=images') && (await page.isHidden('#ex-cat-menu')), shownCats);
+  await page.goto(B + '/th/explore/?cat=json'); await page.waitForTimeout(300);
+  check('explore category link', (await page.locator('.ex-item:not([hidden]) .tool-card').count()) === (await page.locator('#ex-cat-menu [data-cat="json"] b').innerText()) * 1);
 
   // ---- tool switchboard (its GitHub calls are covered by hand; the strict test CSP blocks them) ----
   await page.goto(B + '/admin/');

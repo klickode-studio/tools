@@ -50,6 +50,8 @@ export const UI = {
     exploreHint: 'Drag to explore',
     exploreLede: 'Every one runs right here in your browser. Drag around and pick one.',
     gridView: 'Grid view',
+    allTools: 'All tools',
+    categoriesLabel: 'Categories',
     anySize: 'Any size',
   },
   th: {
@@ -95,6 +97,8 @@ export const UI = {
     exploreHint: 'ลากเพื่อสำรวจ',
     exploreLede: 'ทุกเครื่องมือทำงานในเบราว์เซอร์ของคุณ ลากไปรอบ ๆ แล้วเลือกได้เลย',
     gridView: 'มุมมองตาราง',
+    allTools: 'เครื่องมือทั้งหมด',
+    categoriesLabel: 'หมวดหมู่',
     anySize: 'ขนาดอื่น ๆ',
   },
 };

@@ -21,6 +21,26 @@ body[data-page='explore'] main > .wrap { max-width: none; padding: 0; }
 .ex-grid { height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: var(--red); color: #fff; font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
 .ex-grid:hover { background: #c92a2a; }
 .ex-hint { display: none; }
+
+/* Category menu: a button in the search bar that opens upwards. */
+.ex-cats { position: relative; }
+.ex-cat-btn { height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 13.5px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.ex-cat-btn:hover, .ex-cat-btn[aria-expanded='true'] { border-color: var(--border-strong); background: var(--mist); }
+.ex-cat-btn svg { flex: none; color: var(--muted); }
+.ex-cat-btn .ex-caret { transition: transform 0.25s; }
+.ex-cat-btn[aria-expanded='true'] .ex-caret { transform: rotate(180deg); }
+.ex-cat-menu { position: absolute; left: 50%; bottom: calc(100% + 14px); min-width: 240px; padding: 6px; display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--border-strong); border-radius: 16px; background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%); box-shadow: 0 22px 50px -20px rgba(24, 24, 27, 0.45); transform: translateX(-50%); transform-origin: 50% 100%; animation: ex-menu 0.22s cubic-bezier(0.16, 1, 0.3, 1); }
+.ex-cat-menu[hidden] { display: none; }
+@keyframes ex-menu { from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.96); } }
+.ex-cat-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: 10px; background: none; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.ex-cat-menu button svg { flex: none; color: var(--muted); }
+.ex-cat-menu button:hover, .ex-cat-menu button:focus-visible { background: var(--mist); outline: none; }
+.ex-cat-menu button[aria-checked='true'] { color: var(--red); background: color-mix(in srgb, var(--red) 8%, var(--surface)); }
+.ex-cat-menu button[aria-checked='true'] svg { color: var(--red); }
+.ex-cat-menu b { margin-left: auto; padding-left: 12px; font: 600 12px var(--mono); color: var(--faint); }
+
+/* Switching category: the cards float away before the new set floats in. */
+.ex-out .ex-item > * { opacity: 0 !important; transform: translateY(-16px) scale(0.9) rotate(var(--rot, 0deg)) !important; transition: opacity 0.25s ease, transform 0.25s ease; }
 .ex-none { padding: 0 8px; color: var(--muted); font-size: 13px; white-space: nowrap; }
 
 /* With JavaScript: an endless canvas that fills the space under the header. */
@@ -69,9 +89,11 @@ body.ex-live main > .wrap { height: 100%; }
 .ex-hint.gone { opacity: 0; }
 
 @media (max-width: 640px) {
-  .ex-bar { bottom: 16px; }
-  .ex-search input { width: 44vw; }
+  .ex-bar { bottom: 16px; max-width: calc(100vw - 24px); }
+  .ex-search input { width: 30vw; }
+  .ex-cat-btn #ex-cat-label { display: none; }
+  .ex-cat-btn { padding: 0 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ex-item.ex-in > *, .ex-hero-item img { animation: none; }
+  .ex-item.ex-in > *, .ex-hero-item img, .ex-cat-menu { animation: none; }
 }

@@ -176,7 +176,7 @@ export const toolIcon = (t, cat, size = 20) =>
 // t is already in the page's language; t.href says where it lives (the Thai page, or English if
 // it hasn't been translated yet).
 export const toolCard = (t, cat) =>
-  `<a class="tool-card" href="${t.href ?? `/tools/${t.slug}/`}" data-slug="${t.slug}" data-search="${esc(`${t.name} ${t.short} ${t.slug} ${cat?.name ?? ''} ${(t.keywords || []).join(' ')} ${t.searchExtra ?? ''}`.toLowerCase())}">${
+  `<a class="tool-card" href="${t.href ?? `/tools/${t.slug}/`}" data-slug="${t.slug}" data-category="${t.category}" data-search="${esc(`${t.name} ${t.short} ${t.slug} ${cat?.name ?? ''} ${(t.keywords || []).join(' ')} ${t.searchExtra ?? ''}`.toLowerCase())}">${
     t.preview ? `<div class="tc-preview" aria-hidden="true">${t.preview}</div>` : ''
   }<div class="tc-body"><span class="tc-title"><span class="tool-icon">${toolIcon(t, cat, 16)}</span><strong>${esc(t.name)}</strong></span><span class="desc">${esc(t.short)}</span></div></a>`;
 
